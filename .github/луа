@@ -1,0 +1,44 @@
+ui.add_slider_int(" delta offset", "lby_offset", 0, 120, 78)
+ui.add_slider_int("fake offset", "fake_offset", 0, 58, 29)
+ui.add_slider_int("fake lags", "fakel", 0, 12, 10)
+function hasbit(x, p)
+    return x % (p + p) >= p
+end
+
+local update = 0.0
+local lbyupdate = false
+local function createaa(pCmd)
+
+    if hasbit(pCmd.buttons, 32) then return end
+    if hasbit(pCmd.buttons, 1) then return end
+    pCmd.viewangles.yaw = pCmd.viewangles.yaw + 180
+    if ui.get_bind_state("antihit_antiaim_flip_bind") then
+        side = 1
+    else
+        side = -1
+    end
+    local delta = ui.get_int("lby_offset")
+    local fake = ui.get_int("fake_offset")
+
+    pCmd.viewangles.pitch = 89
+    if globalvars.get_current_time() > update then
+        lbyupdate = false
+        update = globalvars.get_current_time() + 1.1
+        if clientstate.get_choked_commands() <= 9 then
+            pCmd.send_packet = false
+            pCmd.viewangles.yaw = pCmd.viewangles.yaw + delta*side
+        end
+    else
+        lbyupdate = true
+    end
+
+    if clientstate.get_choked_commands() <= ui.get_int("fakel") then
+        pCmd.send_packet = false
+        if lbyupdate then
+            pCmd.viewangles.yaw = pCmd.viewangles.yaw - fake*side
+        end
+    end
+
+end         
+
+client.register_callback("create_move", createaa)
